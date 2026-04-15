@@ -31,7 +31,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
   }
 
   /* 배경 노이즈 + 조명 효과 */
@@ -48,7 +48,8 @@
     z-index: 1;
     width: 100%;
     max-width: 520px;
-    padding: 20px 16px;
+    padding-top: max(60px, env(safe-area-inset-top, 20px));
+    padding-bottom: max(24px, env(safe-area-inset-bottom, 20px));
     padding-left: max(16px, env(safe-area-inset-left));
     padding-right: max(16px, env(safe-area-inset-right));
     display: flex;
@@ -474,9 +475,15 @@
   .glass-options {
     display: flex;
     gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
   }
+
+  .glass-options::-webkit-scrollbar { display: none; }
 
   .glass-opt {
     display: flex;
@@ -489,7 +496,8 @@
     padding: 10px 10px 8px;
     cursor: pointer;
     transition: all 0.18s;
-    min-width: 60px;
+    min-width: 64px;
+    flex-shrink: 0;
   }
 
   .glass-opt:hover {
