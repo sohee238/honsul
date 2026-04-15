@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { overflow-x: hidden; }
 
   :root {
     --amber: #e8902a;
@@ -25,7 +26,8 @@
     color: var(--cream);
     font-family: 'Noto Sans KR', sans-serif;
     min-height: 100vh;
-    overflow: hidden;
+    overflow-x: hidden;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -46,7 +48,9 @@
     z-index: 1;
     width: 100%;
     max-width: 520px;
-    padding: 20px;
+    padding: 20px 16px;
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -226,6 +230,10 @@
     gap: 16px;
     transform: translateZ(0);
     -webkit-font-smoothing: antialiased;
+    width: 100%;
+    max-width: 400px;
+    padding: 0 24px;
+    box-sizing: border-box;
   }
 
   .cheers-emoji {
@@ -533,7 +541,6 @@
   /* ===== 건배사 입력 ===== */
   .cheers-input-area {
     width: 100%;
-    max-width: 320px;
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -637,7 +644,6 @@
   /* ======= 건배사 입력 ======= */
   .cheers-input-area {
     width: 100%;
-    max-width: 320px;
     display: flex;
     flex-direction: column;
     gap: 6px;
