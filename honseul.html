@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>혼술 건배 🥂</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --amber: #e8902a;
+    --amber-deep: #c4660a;
+    --amber-light: #ffd27a;
+    --dark: #0f0a04;
+    --dark2: #1c1209;
+    --dark3: #2b1c0e;
+    --cream: #fdf3dc;
+    --warm-white: #fff8ee;
+  }
+
+  body {
+    background: var(--dark);
+    color: var(--cream);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* 배경 노이즈 + 조명 효과 */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(232,144,42,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .scene {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 520px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  /* 상단 타이틀 */
+  .title-area {
+    text-align: center;
+  }
+
+  .title-area h1 {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(28px, 6vw, 40px);
+    color: var(--amber-light);
+    letter-spacing: 2px;
+    text-shadow: 0 0 40px rgba(232,144,42,0.6);
+    line-height: 1.1;
+  }
+
+  .title-area p {
+    font-size: 13px;
+    color: rgba(255,248,238,0.45);
+    margin-top: 6px;
+    letter-spacing: 0.5px;
+  }
+
+  /* 카메라 뷰 */
+  .camera-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1.5px solid rgba(232,144,42,0.25);
+    background: var(--dark2);
+    box-shadow: 0 0 60px rgba(232,144,42,0.08), inset 0 0 40px rgba(0,0,0,0.5);
+  }
+
+  #video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1);
+    opacity: 0;
+    transition: opacity 0.6s;
+  }
+
+  #video.active { opacity: 1; }
+
+  #canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    transform: scaleX(-1);
+    pointer-events: none;
+  }
+
+  /* 카메라 시작 전 오버레이 */
+  .camera-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: var(--dark2);
+    transition: opacity 0.5s;
+    z-index: 2;
+  }
+
+  .camera-overlay.hidden { opacity: 0; pointer-events: none; }
+
+  .camera-icon {
+    font-size: 48px;
+    opacity: 0.4;
+  }
+
+  .camera-overlay p {
+    font-size: 14px;
+    color: rgba(255,248,238,0.4);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  /* 시작 버튼 */
+  #start-btn {
+    background: linear-gradient(135deg, var(--amber), var(--amber-deep));
+    color: var(--dark);
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 16px;
+    letter-spacing: 1px;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(232,144,42,0.4);
+    margin-top: 8px;
+  }
+
+  #start-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(232,144,42,0.55); }
+  #start-btn:active { transform: scale(0.97); }
+
+  /* 상태 표시 */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: rgba(255,248,238,0.4);
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(255,248,238,0.2);
+    transition: background 0.3s;
+  }
+
+  .status-dot.scanning { background: var(--amber); animation: pulse-dot 1.5s infinite; }
+  .status-dot.detected { background: #4ade80; }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+
+  /* =================== 건배 팝업 =================== */
+  #toast-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    opacity: 0;
+  }
+
+  #toast-popup.show {
+    pointer-events: all;
+    animation: popup-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  }
+
+  #toast-popup.hide {
+    animation: popup-out 0.35s ease-in forwards;
+  }
+
+  @keyframes popup-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes popup-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
+  .popup-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15,10,4,0.85);
+    backdrop-filter: blur(8px);
+  }
+
+  .popup-content {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    transform: translateZ(0);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .cheers-emoji {
+    font-size: 80px;
+    animation: glass-clink 0.6s 0.1s both;
+    display: block;
+  }
+
+  @keyframes glass-clink {
+    0%   { transform: scale(0.3) rotate(-20deg); opacity: 0; }
+    60%  { transform: scale(1.15) rotate(5deg); }
+    80%  { transform: scale(0.95) rotate(-3deg); }
+    100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  }
+
+  .cheers-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: clamp(48px, 12vw, 80px);
+    color: var(--amber-light);
+    text-shadow: 0 0 60px rgba(255,210,122,0.9), 0 0 120px rgba(232,144,42,0.5);
+    animation: title-rise 0.5s 0.2s both;
+    letter-spacing: 4px;
+    line-height: 1;
+  }
+
+  @keyframes title-rise {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  .cheers-sub {
+    font-size: clamp(14px, 3.5vw, 18px);
+    color: rgba(255,248,238,0.6);
+    animation: title-rise 0.5s 0.3s both;
+    line-height: 1.6;
+  }
+
+  .cheers-sub strong {
+    color: var(--amber-light);
+    font-weight: 700;
+  }
+
+  .tap-hint {
+    font-size: 13px;
+    font-weight: 700;
+    color: rgba(255,248,238,0.9);
+    letter-spacing: 0.5px;
+    animation: blink 1s 0.5s infinite;
+    margin-top: 4px;
+    text-shadow: 0 0 12px rgba(255,210,122,0.6);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  @keyframes blink {
+    0%,100% { opacity: 0.9; }
+    50% { opacity: 0.45; }
+  }
+
+  /* =================== 컨페티 =================== */
+  .confetti-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 101;
+    overflow: hidden;
+  }
+
+  .confetti-piece {
+    position: absolute;
+    top: -20px;
+    width: 8px;
+    height: 8px;
+    opacity: 0;
+    animation: confetti-fall var(--dur) var(--delay) ease-in forwards;
+    border-radius: var(--r);
+  }
+
+  @keyframes confetti-fall {
+    0%   { transform: translateY(-20px) rotate(0deg) scale(1); opacity: 1; }
+    80%  { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg) scale(0.5); opacity: 0; }
+  }
+
+  /* 감지 박스 */
+  .det-box {
+    position: absolute;
+    border: 2px solid rgba(232,144,42,0.7);
+    border-radius: 6px;
+    background: rgba(232,144,42,0.08);
+    pointer-events: none;
+    transition: all 0.1s;
+  }
+
+  .det-label {
+    position: absolute;
+    top: -22px; left: 0;
+    font-size: 11px;
+    background: var(--amber);
+    color: var(--dark);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* 권한 거부 안내 */
+  #perm-guide {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+
+  #perm-guide.show { display: flex; }
+
+  .perm-icon { font-size: 44px; }
+
+  .perm-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 20px;
+    color: var(--amber-light);
+  }
+
+  .perm-desc {
+    font-size: 13px;
+    color: rgba(255,248,238,0.5);
+    line-height: 1.7;
+  }
+
+  .steps {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(232,144,42,0.08);
+    border: 1px solid rgba(232,144,42,0.18);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgba(255,248,238,0.75);
+  }
+
+  .step-num {
+    min-width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--amber);
+    color: var(--dark);
+    font-size: 11px;
+    font-weight: 900;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+    flex-shrink: 0;
+  }
+
+  .browser-tabs {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .browser-tab {
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(232,144,42,0.3);
+    background: transparent;
+    color: rgba(255,248,238,0.45);
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: all 0.15s;
+  }
+
+  .browser-tab.active {
+    background: rgba(232,144,42,0.15);
+    border-color: var(--amber);
+    color: var(--amber-light);
+  }
+
+  #retry-btn {
+    background: linear-gradient(135deg, var(--amber), var(--amber-deep));
+    color: var(--dark);
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 15px;
+    letter-spacing: 1px;
+    border: none;
+    padding: 11px 28px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 4px 20px rgba(232,144,42,0.4);
+  }
+
+  #retry-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(232,144,42,0.55); }
+
+  #manual-btn {
+    background: transparent;
+    color: rgba(255,248,238,0.35);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 13px;
+    border: 1px dashed rgba(232,144,42,0.25);
+    padding: 8px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  #manual-btn:hover {
+    color: var(--amber-light);
+    border-color: rgba(232,144,42,0.6);
+    background: rgba(232,144,42,0.07);
+  }
+
+  #glass-picker {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    animation: fadein 0.4s both;
+  }
+
+  .glass-picker-label {
+    font-size: 12px;
+    color: rgba(255,248,238,0.35);
+    letter-spacing: 0.3px;
+  }
+
+  .glass-options {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .glass-opt {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255,248,238,0.04);
+    border: 1.5px solid rgba(232,144,42,0.18);
+    border-radius: 12px;
+    padding: 10px 10px 8px;
+    cursor: pointer;
+    transition: all 0.18s;
+    min-width: 60px;
+  }
+
+  .glass-opt:hover {
+    border-color: rgba(232,144,42,0.5);
+    background: rgba(232,144,42,0.08);
+  }
+
+  .glass-opt.active {
+    border-color: var(--amber);
+    background: rgba(232,144,42,0.15);
+    box-shadow: 0 0 12px rgba(232,144,42,0.25);
+  }
+
+  .glass-icon { font-size: 24px; line-height: 1; }
+
+  .glass-name {
+    font-size: 10px;
+    color: rgba(255,248,238,0.45);
+    letter-spacing: -0.2px;
+    white-space: nowrap;
+  }
+
+  .glass-opt.active .glass-name { color: var(--amber-light); }
+
+  #total-counter {
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: rgba(255,248,238,0.3);
+    animation: fadein 0.5s both;
+  }
+
+  #counter-num {
+    color: var(--amber-light);
+    font-weight: 700;
+  }
+
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+
+  .together-count {
+    font-size: 13px;
+    color: rgba(255,248,238,0.45);
+    animation: title-rise 0.5s 0.5s both;
+    line-height: 1.6;
+  }
+
+  .together-count strong { color: var(--amber-light); }
+
+  /* ===== 건배사 입력 ===== */
+  .cheers-input-area {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    animation: title-rise 0.4s 0.4s both;
+  }
+
+  .cheers-input-area textarea {
+    width: 100%;
+    background: rgba(255,248,238,0.07);
+    border: 1.5px solid rgba(232,144,42,0.3);
+    border-radius: 12px;
+    color: var(--cream);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 10px 14px;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .cheers-input-area textarea::placeholder { color: rgba(255,248,238,0.25); }
+  .cheers-input-area textarea:focus { border-color: var(--amber); }
+
+  .cheers-input-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .cheers-char-count {
+    font-size: 11px;
+    color: rgba(255,248,238,0.25);
+  }
+
+  .cheers-submit {
+    background: linear-gradient(135deg, var(--amber), var(--amber-deep));
+    color: var(--dark);
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 13px;
+    border: none;
+    padding: 7px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+    white-space: nowrap;
+  }
+
+  .cheers-submit:hover { transform: translateY(-1px); }
+  .cheers-submit:disabled { opacity: 0.35; cursor: default; transform: none; }
+
+  /* ===== 떠다니는 말풍선 ===== */
+  .bubble-layer {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    overflow: hidden;
+  }
+
+  .speech-bubble {
+    position: absolute;
+    bottom: 100px;
+    background: rgba(28,18,9,0.92);
+    border: 1px solid rgba(232,144,42,0.4);
+    border-radius: 16px 16px 16px 4px;
+    padding: 10px 14px;
+    max-width: 220px;
+    animation: bubble-rise var(--bdur) ease-out forwards;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .speech-bubble.mine {
+    border-radius: 16px 16px 4px 16px;
+    border-color: rgba(232,144,42,0.7);
+    background: rgba(42,28,14,0.95);
+  }
+
+  .bubble-msg {
+    font-size: 13px;
+    color: var(--cream);
+    line-height: 1.5;
+    word-break: keep-all;
+  }
+
+  .bubble-meta {
+    font-size: 10px;
+    color: rgba(255,248,238,0.35);
+    margin-top: 4px;
+  }
+
+  @keyframes bubble-rise {
+    0%   { transform: translateY(0); opacity: 0; }
+    10%  { opacity: 1; }
+    70%  { opacity: 1; }
+    100% { transform: translateY(-180px); opacity: 0; }
+  }
+
+  /* ======= 건배사 입력 ======= */
+  .cheers-input-area {
+    width: 100%;
+    max-width: 320px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    animation: title-rise 0.4s 0.4s both;
+  }
+
+  .cheers-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  #cheers-text {
+    flex: 1;
+    background: rgba(255,248,238,0.07);
+    border: 1.5px solid rgba(232,144,42,0.35);
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-size: 14px;
+    color: var(--cream);
+    font-family: 'Noto Sans KR', sans-serif;
+    outline: none;
+    -webkit-font-smoothing: antialiased;
+    transition: border-color 0.2s;
+  }
+
+  #cheers-text::placeholder { color: rgba(255,248,238,0.3); }
+  #cheers-text:focus { border-color: var(--amber); background: rgba(232,144,42,0.1); }
+
+  #cheers-send {
+    background: var(--amber);
+    color: var(--dark);
+    border: none;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  #cheers-send:hover { background: var(--amber-light); }
+  #cheers-send:active { transform: scale(0.96); }
+  #cheers-send:disabled { opacity: 0.4; cursor: default; }
+
+  .cheers-input-hint {
+    font-size: 11px;
+    color: rgba(255,248,238,0.25);
+    text-align: center;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ======= 플로팅 말풍선 ======= */
+  #bubble-container {
+    position: fixed;
+    bottom: 28px;
+    left: 0; right: 0;
+    display: flex;
+    flex-direction: column-reverse;
+    align-items: center;
+    gap: 10px;
+    pointer-events: none;
+    z-index: 200;
+  }
+
+  .cheers-bubble {
+    background: rgba(28,18,9,0.92);
+    border: 1.5px solid rgba(232,144,42,0.4);
+    border-radius: 20px 20px 20px 4px;
+    padding: 10px 18px;
+    max-width: 280px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    animation: bubble-up 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    backdrop-filter: blur(4px);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .cheers-bubble.fade-out {
+    animation: bubble-fade 0.6s ease-in forwards;
+  }
+
+  .bubble-text {
+    font-size: 14px;
+    color: var(--cream);
+    line-height: 1.5;
+    font-weight: 500;
+  }
+
+  .bubble-glass {
+    font-size: 11px;
+    color: var(--amber);
+    font-weight: 700;
+  }
+
+  .cheers-bubble.mine {
+    border-color: rgba(232,144,42,0.8);
+    border-radius: 20px 20px 4px 20px;
+    background: rgba(50,30,10,0.97);
+  }
+
+  @keyframes bubble-up {
+    from { transform: translateY(30px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+  }
+
+  @keyframes bubble-fade {
+    from { opacity: 1; transform: translateY(0); }
+    to   { opacity: 0; transform: translateY(-16px); }
+  }
+
+  /* ======= 메인 건배사 입력 + 피드 ======= */
+  #message-section {
+    flex-direction: column;
+    gap: 10px;
+    animation: fadein 0.4s both;
+  }
+
+  .msg-input-wrap {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  #main-cheers-text {
+    flex: 1;
+    background: rgba(255,248,238,0.06);
+    border: 1.5px solid rgba(232,144,42,0.3);
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-size: 13px;
+    color: var(--cream);
+    font-family: 'Noto Sans KR', sans-serif;
+    outline: none;
+    -webkit-font-smoothing: antialiased;
+    transition: border-color 0.2s;
+  }
+
+  #main-cheers-text::placeholder { color: rgba(255,248,238,0.25); }
+  #main-cheers-text:focus { border-color: var(--amber); background: rgba(232,144,42,0.08); }
+
+  #main-cheers-send {
+    background: var(--amber);
+    color: var(--dark);
+    border: none;
+    border-radius: 999px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  #main-cheers-send:hover { background: var(--amber-light); }
+  #main-cheers-send:active { transform: scale(0.96); }
+  #main-cheers-send:disabled { opacity: 0.4; cursor: default; }
+
+  .msg-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-height: 180px;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .msg-feed::-webkit-scrollbar { display: none; }
+
+  .msg-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(255,248,238,0.04);
+    border-radius: 10px;
+    border: 1px solid rgba(232,144,42,0.12);
+    animation: fadein 0.35s both;
+  }
+
+  .msg-item.mine {
+    border-color: rgba(232,144,42,0.4);
+    background: rgba(232,144,42,0.08);
+  }
+
+  .msg-glass { font-size: 16px; flex-shrink: 0; }
+
+  .msg-body { flex: 1; min-width: 0; }
+
+  .msg-text {
+    font-size: 13px;
+    color: var(--cream);
+    -webkit-font-smoothing: antialiased;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .msg-time {
+    font-size: 10px;
+    color: rgba(255,248,238,0.28);
+    margin-top: 2px;
+  }
+
+  /* ===== 최상단 배경 드롭다운 ===== */
+  #bg-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 300;
+    display: flex;
+    justify-content: center;
+    padding: 10px 16px;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent);
+    pointer-events: none;
+  }
+
+  #bg-select {
+    pointer-events: all;
+    background: rgba(15,10,4,0.75);
+    color: rgba(255,248,238,0.75);
+    border: 1px solid rgba(232,144,42,0.35);
+    border-radius: 999px;
+    padding: 6px 14px 6px 12px;
+    font-size: 12px;
+    font-family: 'Noto Sans KR', sans-serif;
+    cursor: pointer;
+    outline: none;
+    backdrop-filter: blur(6px);
+    transition: border-color 0.2s, color 0.2s;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='rgba(232,144,42,0.6)'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+  }
+
+  #bg-select:hover { border-color: var(--amber); color: var(--amber-light); }
+
+  /* ===== body 배경 테마 ===== */
+
+  /* 👇 배경 이미지 경로를 여기에 넣어주세요 */
+  body.theme-pojangmacha {
+    background-color: #120800;
+    background-image: url(''); /* ← 포장마차 이미지 경로 */
+    background-size: cover;
+    background-position: center;
+  }
+  body.theme-club {
+    background-color: #050010;
+    background-image: url(''); /* ← 클럽 이미지 경로 */
+    background-size: cover;
+    background-position: center;
+  }
+  body.theme-hof {
+    background-color: #0e0800;
+    background-image: url(''); /* ← 호프집 이미지 경로 */
+    background-size: cover;
+    background-position: center;
+  }
+  body.theme-winebar {
+    background-color: #0a0008;
+    background-image: url(''); /* ← 와인바 이미지 경로 */
+    background-size: cover;
+    background-position: center;
+  }
+  body.theme-pojangmacha::before {
+    background:
+      radial-gradient(ellipse 80% 60% at 50% 100%, rgba(255,100,0,0.35) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 40% at 15% 60%, rgba(255,140,0,0.2) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 40% at 85% 60%, rgba(255,140,0,0.2) 0%, transparent 55%);
+    animation: bg-breathe 5s ease-in-out infinite alternate;
+  }
+
+  body.theme-club::before {
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 50%, rgba(120,0,255,0.25) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 80% 50%, rgba(0,200,255,0.2) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 30% at 50% 0%, rgba(255,0,180,0.15) 0%, transparent 55%);
+    animation: club-bg-pulse 2s ease-in-out infinite alternate;
+  }
+
+  body.theme-hof::before {
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 100%, rgba(180,90,10,0.35) 0%, transparent 65%),
+      radial-gradient(ellipse 40% 60% at 10% 70%, rgba(160,80,10,0.2) 0%, transparent 55%),
+      radial-gradient(ellipse 40% 60% at 90% 70%, rgba(160,80,10,0.2) 0%, transparent 55%);
+    animation: bg-breathe 6s ease-in-out infinite alternate;
+  }
+
+  body.theme-winebar::before {
+    background:
+      radial-gradient(ellipse 60% 50% at 50% 100%, rgba(120,0,40,0.4) 0%, transparent 65%),
+      radial-gradient(ellipse 50% 40% at 20% 40%, rgba(80,0,30,0.25) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 40% at 80% 40%, rgba(80,0,30,0.25) 0%, transparent 55%);
+    animation: bg-breathe 7s ease-in-out infinite alternate;
+  }
+
+  @keyframes bg-breathe {
+    0%   { opacity: 0.85; transform: scale(1); }
+    100% { opacity: 1;    transform: scale(1.03); }
+  }
+
+  @keyframes club-bg-pulse {
+    0%   { opacity: 0.7; filter: hue-rotate(0deg); }
+    50%  { opacity: 1;   filter: hue-rotate(20deg); }
+    100% { opacity: 0.8; filter: hue-rotate(-20deg); }
+  }
+
+  /* 로딩 바 */
+  #loading-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--amber), var(--amber-light), var(--amber));
+    background-size: 200%;
+    animation: loading-slide 1.5s linear infinite;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  #loading-bar.show { opacity: 1; }
+
+  @keyframes loading-slide {
+    0% { background-position: 200% center; }
+    100% { background-position: 0% center; }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading-bar"></div>
+
+<div id="bg-bar">
+  <select id="bg-select" onchange="selectBg(this.value)">
+    <option value="default">기본</option>
+    <option value="pojangmacha">포장마차</option>
+    <option value="club">클럽</option>
+    <option value="hof">호프집</option>
+    <option value="winebar">와인바</option>
+  </select>
+</div>
+
+<div class="scene">
+  <div class="title-area">
+    <h1>혼자서 건배 🥂</h1>
+    <p>카메라에 컵을 보여주세요</p>
+  </div>
+
+  <div id="glass-picker" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
+    <div class="glass-picker-label">오늘의 잔을 골라봐요 🍻</div>
+    <div class="glass-options">
+      <button class="glass-opt active" onclick="selectGlass(this,'🍷','와인잔')">
+        <span class="glass-icon">🍷</span>
+        <span class="glass-name">와인잔</span>
+      </button>
+      <button class="glass-opt" onclick="selectGlass(this,'🍺','맥주잔')">
+        <span class="glass-icon">🍺</span>
+        <span class="glass-name">맥주잔</span>
+      </button>
+      <button class="glass-opt" onclick="selectGlass(this,'🥂','소주잔')">
+        <span class="glass-icon">🥂</span>
+        <span class="glass-name">소주잔</span>
+      </button>
+      <button class="glass-opt" onclick="selectGlass(this,'🍵','막걸리잔')">
+        <span class="glass-icon">🍵</span>
+        <span class="glass-name">막걸리잔</span>
+      </button>
+      <button class="glass-opt" onclick="selectGlass(this,'🥃','위스키잔')">
+        <span class="glass-icon">🥃</span>
+        <span class="glass-name">위스키잔</span>
+      </button>
+      <button class="glass-opt" onclick="selectGlass(this,'🍶','사케잔')">
+        <span class="glass-icon">🍶</span>
+        <span class="glass-name">사케잔</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="camera-wrapper">
+    <video id="video" autoplay playsinline muted></video>
+    <canvas id="canvas"></canvas>
+    <div class="camera-overlay" id="cam-overlay">
+      <div id="cam-start">
+        <div class="camera-icon">📷</div>
+        <p>카메라 권한이 필요해요<br>버튼을 눌러 혼술을 시작하세요</p>
+        <button id="start-btn" onclick="startCamera()">혼술 시작하기</button>
+      </div>
+
+      <div id="perm-guide">
+        <div class="perm-icon">🔒</div>
+        <div class="perm-title">카메라 권한이 막혀있어요</div>
+        <div class="perm-desc">브라우저가 카메라 접근을 차단했어요.<br>아래 방법으로 허용 후 다시 시도해보세요.</div>
+        <div class="browser-tabs">
+          <button class="browser-tab active" onclick="showBrowserGuide('chrome')">Chrome</button>
+          <button class="browser-tab" onclick="showBrowserGuide('safari')">Safari</button>
+          <button class="browser-tab" onclick="showBrowserGuide('firefox')">Firefox</button>
+          <button class="browser-tab" onclick="showBrowserGuide('mobile')">모바일</button>
+        </div>
+        <div class="steps" id="guide-steps"></div>
+        <button id="retry-btn" onclick="startCamera()">🔄 다시 시도하기</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="status-dot" id="status-dot"></div>
+    <span id="status-text">카메라를 시작해주세요</span>
+  </div>
+
+  <button id="manual-btn" onclick="showToast()" style="display:none;">
+    그냥 건배하기
+  </button>
+
+  <div id="total-counter" style="display:none; align-items:center; gap:6px;">
+    <span>🥂</span>
+    <span>지금까지 <strong id="counter-num">0</strong>번의 건배가 울렸어요</span>
+  </div>
+</div>
+
+<!-- 건배 팝업 -->
+<div id="toast-popup">
+  <div class="popup-backdrop"></div>
+  <div class="popup-content">
+    <span class="cheers-emoji">🥂</span>
+    <div class="cheers-title">건배!</div>
+    <div class="cheers-sub" id="cheers-sub">오늘도 수고한 <strong>나</strong>에게<br>한 잔 바칩니다 🍻</div>
+
+    <div class="cheers-input-area" id="cheers-input-area">
+      <div class="cheers-input-wrap">
+        <input type="text" id="cheers-text" maxlength="30" placeholder="한마디 남기고 가요 ✍️" autocomplete="off" />
+        <button id="cheers-send" onclick="submitCheersMessage()">남기기</button>
+      </div>
+      <div class="cheers-input-hint">최대 30자 · 다음 건배 때 보여요</div>
+    </div>
+
+    <div class="tap-hint" id="countdown-hint">5초 후 자동으로 닫혀요</div>
+  </div>
+</div>
+
+<div id="bubble-container"></div>
+<div class="confetti-container" id="confetti-container"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/firebase-app-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/firebase@9.22.0/firebase-database-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+<script>
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const overlay = document.getElementById('cam-overlay');
+const statusDot = document.getElementById('status-dot');
+const statusText = document.getElementById('status-text');
+const popup = document.getElementById('toast-popup');
+const loadingBar = document.getElementById('loading-bar');
+
+let model = null;
+let detecting = false;
+let lastToast = 0;
+const TOAST_COOLDOWN = 8000;
+const SCORE_THRESHOLD = 0.22;
+
+const CHEERS_MESSAGES = [
+  ['오늘도 수고한 <strong>나</strong>에게', '한 잔 바칩니다 🍻'],
+  ['아무도 없어도 괜찮아', '<strong>내가 있잖아</strong> 🥹'],
+  ['혼자라서 더 자유로운 밤', '<strong>나를 위한 건배</strong> 🌙'],
+  ['오늘의 모든 일들에게', '<strong>수고했어, 잘했어</strong> 👏'],
+  ['세상에서 가장 편한 술자리', '<strong>혼술이 최고야</strong> ✨'],
+  ['잔이 감지됐습니다!', '<strong>건배할 준비 완료</strong> 🎉'],
+];
+
+const TARGET_CLASSES = ['cup', 'wine glass', 'bottle', 'bowl'];
+
+const BROWSER_GUIDES = {
+  chrome: [
+    ['주소창 왼쪽', '🔒 자물쇠 아이콘을 클릭하세요'],
+    ['카메라 항목', '"카메라"를 찾아 <strong>허용</strong>으로 변경하세요'],
+    ['페이지 새로고침', '변경 후 페이지를 새로고침하고 다시 시도하세요'],
+  ],
+  safari: [
+    ['Safari 메뉴', '상단 <strong>Safari → 설정 → 웹사이트</strong> 탭을 여세요'],
+    ['카메라 섹션', '왼쪽 목록에서 <strong>카메라</strong>를 선택하세요'],
+    ['이 사이트 허용', '현재 사이트를 찾아 <strong>허용</strong>으로 변경하세요'],
+  ],
+  firefox: [
+    ['주소창 왼쪽', '🔒 자물쇠 아이콘 → <strong>연결 보안</strong>을 클릭하세요'],
+    ['권한 설정', '<strong>권한 더 보기</strong>에서 카메라 항목을 허용으로 바꾸세요'],
+    ['새로고침', '페이지를 새로고침하고 다시 시도하세요'],
+  ],
+  mobile: [
+    ['기기 설정 앱', '<strong>설정 → 앱 → 브라우저 앱</strong>으로 이동하세요'],
+    ['권한 항목', '<strong>권한 → 카메라</strong>를 허용으로 변경하세요'],
+    ['브라우저로 돌아오기', '다시 이 페이지로 와서 버튼을 눌러보세요'],
+  ],
+};
+
+function showBrowserGuide(browser) {
+  document.querySelectorAll('.browser-tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+  const stepsEl = document.getElementById('guide-steps');
+  stepsEl.innerHTML = BROWSER_GUIDES[browser].map(([label, desc], i) => `
+    <div class="step">
+      <div class="step-num">${i + 1}</div>
+      <div><strong style="color:var(--amber-light);display:block;margin-bottom:2px;">${label}</strong>${desc}</div>
+    </div>
+  `).join('');
+}
+
+async function startCamera() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } });
+    video.srcObject = stream;
+    video.onloadedmetadata = () => {
+      video.classList.add('active');
+      overlay.classList.add('hidden');
+      loadModel();
+    };
+  } catch (e) {
+    console.error(e);
+    if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+      showPermGuide();
+    } else if (e.name === 'NotFoundError') {
+      setStatus('', '카메라를 찾을 수 없어요 📷');
+    } else {
+      setStatus('', `카메라 오류: ${e.message}`);
+    }
+  }
+}
+
+function showPermGuide() {
+  document.getElementById('cam-start').style.display = 'none';
+  document.getElementById('perm-guide').classList.add('show');
+
+  // 브라우저 자동 감지
+  const ua = navigator.userAgent;
+  let detected = 'chrome';
+  if (/safari/i.test(ua) && !/chrome/i.test(ua)) detected = 'safari';
+  else if (/firefox/i.test(ua)) detected = 'firefox';
+  else if (/mobile|android|iphone/i.test(ua)) detected = 'mobile';
+
+  document.querySelectorAll('.browser-tab').forEach(t => {
+    t.classList.toggle('active', t.textContent.toLowerCase().includes(detected) || (detected === 'mobile' && t.textContent === '모바일'));
+  });
+  showBrowserGuide(detected);
+  setStatus('', '카메라 권한이 필요해요');
+}
+
+async function loadModel() {
+  setStatus('ai-loading', '🤖 AI 모델 로딩 중...');
+  loadingBar.classList.add('show');
+  try {
+    model = await cocoSsd.load();
+    loadingBar.classList.remove('show');
+    setStatus('scanning', '🔍 컵을 들어보세요!');
+    document.getElementById('manual-btn').style.display = 'block';
+    loadCounter();
+    listenToMessages();
+    startBubbleShow();
+    requestAnimationFrame(detect);
+  } catch(e) {
+    loadingBar.classList.remove('show');
+    setStatus('', '모델 로딩 실패');
+    console.error(e);
+  }
+}
+
+function setStatus(type, text) {
+  statusText.textContent = text;
+  statusDot.className = 'status-dot';
+  if (type === 'scanning') statusDot.classList.add('scanning');
+  if (type === 'detected') statusDot.classList.add('detected');
+}
+
+async function detect() {
+  if (!model || !video.videoWidth) { requestAnimationFrame(detect); return; }
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  let predictions = [];
+  try { predictions = await model.detect(video); } catch(e) {}
+
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  let found = false;
+  const drinkItems = predictions.filter(p =>
+    TARGET_CLASSES.includes(p.class) && p.score > SCORE_THRESHOLD
+  );
+
+  for (const pred of drinkItems) {
+    found = true;
+    const [x, y, w, h] = pred.bbox;
+    const score = Math.round(pred.score * 100);
+    const fx = canvas.width - x - w;
+
+    ctx.strokeStyle = 'rgba(232,144,42,0.85)';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.roundRect(fx, y, w, h, 6);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(232,144,42,0.1)';
+    ctx.fill();
+
+    const label = `${getKorean(pred.class)} ${score}%`;
+    ctx.font = 'bold 12px sans-serif';
+    const labelW = ctx.measureText(label).width + 16;
+    const labelH = 22;
+    const labelX = Math.min(fx, canvas.width - labelW - 2);
+    const labelY = y < labelH + 4 ? y + h : y - labelH - 2;
+
+    ctx.fillStyle = 'rgba(232,144,42,1)';
+    ctx.beginPath();
+    ctx.roundRect(labelX, labelY, labelW, labelH, 4);
+    ctx.fill();
+    ctx.fillStyle = '#0f0a04';
+    ctx.fillText(label, labelX + 8, labelY + 15);
+  }
+
+  if (found) {
+    setStatus('detected', '✅ 잔 발견! 건배 준비 완료!');
+    const now = Date.now();
+    if (now - lastToast > TOAST_COOLDOWN) {
+      lastToast = now;
+      showToast();
+    }
+  } else {
+    setStatus('scanning', '🔍 컵을 들어보세요!');
+  }
+
+  requestAnimationFrame(detect);
+}
+
+function getKorean(cls) {
+  if (cls === 'wine glass') return '와인잔';
+  if (cls === 'bottle') return '병';
+  if (cls === 'cup') return '컵';
+  return '잔';
+}
+
+function selectBg(theme) {
+  document.body.className = document.body.className
+    .replace(/theme-\S+/g, '').trim();
+  if (theme !== 'default') document.body.classList.add('theme-' + theme);
+}
+
+let selectedGlass = { emoji: '🍷', name: '와인잔' };
+
+function selectGlass(el, emoji, name) {
+  document.querySelectorAll('.glass-opt').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  selectedGlass = { emoji, name };
+  const btn = document.getElementById('manual-btn');
+  if (btn) btn.textContent = `${emoji} 그냥 건배하기`;
+}
+
+const COUNTER_HIT = 'https://api.counterapi.dev/v1/honseul-app-2026/cheers/up';
+const COUNTER_GET = 'https://api.counterapi.dev/v1/honseul-app-2026/cheers';
+
+let autoCloseTimer = null;
+let countdownInterval = null;
+
+async function loadCounter() {
+  let n = parseInt(localStorage.getItem('honseul_total') || '0');
+  try {
+    const res = await fetch(COUNTER_GET);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.count > n) { n = data.count; localStorage.setItem('honseul_total', n); }
+    }
+  } catch (e) {}
+  updateCounterUI(n);
+  document.getElementById('total-counter').style.display = 'flex';
+}
+
+async function incrementCounter() {
+  let n = parseInt(localStorage.getItem('honseul_total') || '0') + 1;
+  localStorage.setItem('honseul_total', n);
+  updateCounterUI(n);
+  try {
+    const res = await fetch(COUNTER_HIT);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.count >= n) { n = data.count; localStorage.setItem('honseul_total', n); updateCounterUI(n); }
+    }
+  } catch (e) {}
+  return n;
+}
+
+function updateCounterUI(n) {
+  document.getElementById('counter-num').textContent = n.toLocaleString();
+}
+
+const DEFAULT_MESSAGES = [
+  { text: '오늘도 살아있어서 건배', glass: '🍷' },
+  { text: '이 한 잔이 오늘의 전부야', glass: '🍺' },
+  { text: '혼자라서 오히려 좋아', glass: '🥛' },
+  { text: '수고했어 오늘도', glass: '🍶' },
+  { text: '내일은 더 잘 될 거야', glass: '🥃' },
+];
+
+function loadMessages() {
+  try {
+    return JSON.parse(localStorage.getItem('honseul_messages') || '[]');
+  } catch { return []; }
+}
+
+function saveMessage(text, glass) {
+  const msgs = loadMessages();
+  msgs.unshift({ text, glass, ts: Date.now() });
+  if (msgs.length > 100) msgs.pop();
+  localStorage.setItem('honseul_messages', JSON.stringify(msgs));
+}
+
+function showFloatingBubble(text, glass) {
+  const container = document.getElementById('bubble-container');
+  const el = document.createElement('div');
+  el.className = 'cheers-bubble';
+  el.innerHTML = `<span class="bubble-text">"${text}"</span><span class="bubble-glass">${glass} 로 건배</span>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('fade-out');
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+  }, 3500);
+}
+
+function submitCheersMessage() {
+  const input = document.getElementById('cheers-text');
+  const text = input.value.trim();
+  if (!text) return;
+  saveMessage(text, selectedGlass.emoji);
+  input.value = '';
+  document.getElementById('cheers-send').disabled = true;
+  document.getElementById('cheers-send').textContent = '✓ 남겼어요';
+  resumeCountdown();
+  showFloatingBubble(text, selectedGlass.emoji);
+}
+
+function showRandomSavedBubble() {
+  const msgs = loadMessages();
+  const pool = msgs.length ? msgs : DEFAULT_MESSAGES;
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+  if (pick) setTimeout(() => showFloatingBubble(pick.text, pick.glass || '🥂'), 1200);
+}
+
+let countdownPaused = false;
+
+function pauseCountdown() {
+  if (countdownPaused) return;
+  countdownPaused = true;
+  clearTimeout(autoCloseTimer);
+  clearInterval(countdownInterval);
+  document.getElementById('countdown-hint').textContent = '입력 중... ⏸';
+}
+
+function resumeCountdown() {
+  if (!countdownPaused) return;
+  countdownPaused = false;
+  let remaining = 3;
+  const hint = document.getElementById('countdown-hint');
+  hint.textContent = `${remaining}초 후 자동으로 닫혀요`;
+  countdownInterval = setInterval(() => {
+    remaining--;
+    hint.textContent = remaining > 0 ? `${remaining}초 후 자동으로 닫혀요` : '';
+  }, 1000);
+  autoCloseTimer = setTimeout(() => {
+    clearInterval(countdownInterval);
+    hideToast();
+  }, 3000);
+}
+
+function showToast() {
+  document.querySelector('.cheers-emoji').textContent = selectedGlass.emoji;
+  document.querySelector('.cheers-title').textContent = '건배!';
+  const msg = CHEERS_MESSAGES[Math.floor(Math.random() * CHEERS_MESSAGES.length)];
+  document.getElementById('cheers-sub').innerHTML = msg[0] + '<br>' + msg[1];
+
+  const input = document.getElementById('cheers-text');
+  input.value = '';
+  const sendBtn = document.getElementById('cheers-send');
+  sendBtn.disabled = false;
+  sendBtn.textContent = '남기기';
+  input.addEventListener('focus', pauseCountdown);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') submitCheersMessage(); });
+
+  countdownPaused = false;
+  popup.className = '';
+  popup.style.opacity = '';
+  popup.classList.add('show');
+  spawnConfetti();
+
+  incrementCounter();
+
+  clearTimeout(autoCloseTimer);
+  clearInterval(countdownInterval);
+
+  let remaining = 5;
+  const hint = document.getElementById('countdown-hint');
+  hint.textContent = `${remaining}초 후 자동으로 닫혀요`;
+
+  countdownInterval = setInterval(() => {
+    remaining--;
+    hint.textContent = remaining > 0 ? `${remaining}초 후 자동으로 닫혀요` : '';
+  }, 1000);
+
+  autoCloseTimer = setTimeout(() => {
+    clearInterval(countdownInterval);
+    hideToast();
+  }, 5000);
+}
+
+loadCounter();
+
+function hideToast() {
+  popup.classList.remove('show');
+  popup.classList.add('hide');
+  popup.addEventListener('animationend', () => {
+    popup.className = '';
+    popup.style.opacity = '0';
+    document.getElementById('confetti-container').innerHTML = '';
+  }, { once: true });
+}
+
+function spawnConfetti() {
+  const container = document.getElementById('confetti-container');
+  container.innerHTML = '';
+  const colors = ['#ffd27a', '#e8902a', '#ff6b6b', '#4ade80', '#60a5fa', '#f0abfc', '#fff8ee', '#fbbf24'];
+  const shapes = ['0%', '50%', '4px'];
+
+  for (let i = 0; i < 90; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.cssText = `
+      left: ${Math.random() * 100}%;
+      background: ${colors[Math.floor(Math.random() * colors.length)]};
+      --dur: ${1.8 + Math.random() * 1.8}s;
+      --delay: ${Math.random() * 0.8}s;
+      --r: ${shapes[Math.floor(Math.random() * shapes.length)]};
+      width: ${6 + Math.random() * 8}px;
+      height: ${6 + Math.random() * 8}px;
+      transform: rotate(${Math.random()*360}deg);
+    `;
+    container.appendChild(piece);
+  }
+}
+
+// ===== 건배사 방명록 시스템 =====
+
+// ============================================================
+// 🔥 Firebase 설정 — 아래 값을 채워주세요
+// 1. console.firebase.google.com → 프로젝트 만들기
+// 2. Realtime Database → 테스트 모드로 생성
+// 3. 프로젝트 설정 → 웹 앱 추가 → 아래에 붙여넣기
+// ============================================================
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+};
+// ============================================================
+
+let db = null;
+let firebaseMsgs = [];
+
+try {
+  if (!firebaseConfig.apiKey.includes('YOUR')) {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+  }
+} catch(e) { console.warn('Firebase 초기화 실패', e); }
+
+const SEED_MSGS = [
+  { text: '야근 버티고 한 잔, 나 최고야', glass: '🍺' },
+  { text: '퇴사각 재는 중... 일단 건배', glass: '🥃' },
+  { text: '다이어트는 오늘도 내일부터', glass: '🍺' },
+  { text: '월급날 기념 혼술 건배!', glass: '🍷' },
+  { text: '이 세상 모든 혼술러 건배!', glass: '🥂' },
+  { text: '혼자가 제일 편해 🥹', glass: '🍷' },
+  { text: '오늘 하루도 잘 버텼다', glass: '🥃' },
+  { text: '아무 이유 없어도 괜찮아', glass: '🍶' },
+];
+
+function relTime(ts) {
+  const d = (Date.now() - ts) / 1000;
+  if (d < 60) return '방금 전';
+  if (d < 3600) return `${Math.floor(d/60)}분 전`;
+  if (d < 86400) return `${Math.floor(d/3600)}시간 전`;
+  return `${Math.floor(d/86400)}일 전`;
+}
+
+function renderFeed(msgs) {
+  const feed = document.getElementById('msg-feed');
+  if (!feed) return;
+  feed.innerHTML = '';
+  const list = [...msgs].reverse().slice(0, 20);
+  list.forEach((m, i) => {
+    const el = document.createElement('div');
+    el.className = 'msg-item' + (m.mine ? ' mine' : '');
+    el.innerHTML = `
+      <span class="msg-glass">${m.glass || '🥂'}</span>
+      <div class="msg-body">
+        <div class="msg-text">${m.text}</div>
+        <div class="msg-time">${m.ts ? relTime(m.ts) : ''}</div>
+      </div>`;
+    el.style.animationDelay = `${i * 0.04}s`;
+    feed.appendChild(el);
+  });
+}
+
+function listenToMessages() {
+  if (db) {
+    db.ref('honseul_messages').limitToLast(40).on('value', snap => {
+      const data = snap.val();
+      firebaseMsgs = data ? Object.values(data) : [];
+    });
+    const startTs = Date.now();
+    db.ref('honseul_messages').limitToLast(1).on('child_added', snap => {
+      const m = snap.val();
+      if (m && m.ts > startTs + 1000) spawnBubble(m.text, m.glass, false);
+    });
+  } else {
+    firebaseMsgs = [...SEED_MSGS];
+  }
+}
+
+function submitCheersMessage() {
+  const input = document.getElementById('cheers-text');
+  const text = input ? input.value.trim() : '';
+  if (!text) return;
+
+  const msg = { text, glass: selectedGlass.emoji, ts: Date.now() };
+
+  if (db) {
+    db.ref('honseul_messages').push(msg);
+  } else {
+    firebaseMsgs.push(msg);
+  }
+
+  spawnBubble(text, selectedGlass.emoji, true);
+  if (input) input.value = '';
+
+  const btn = document.getElementById('cheers-send');
+  btn.disabled = true;
+  btn.textContent = '✓ 남겼어요';
+
+  clearTimeout(autoCloseTimer);
+  clearInterval(countdownInterval);
+  let remaining = 3;
+  const hint = document.getElementById('countdown-hint');
+  hint.textContent = `${remaining}초 후 닫혀요`;
+  countdownInterval = setInterval(() => {
+    remaining--;
+    hint.textContent = remaining > 0 ? `${remaining}초 후 닫혀요` : '';
+  }, 1000);
+  autoCloseTimer = setTimeout(() => {
+    clearInterval(countdownInterval);
+    hideToast();
+  }, 3000);
+}
+
+function startBubbleShow() {
+  const show = () => {
+    const pool = firebaseMsgs.length ? firebaseMsgs : SEED_MSGS;
+    const m = pool[Math.floor(Math.random() * pool.length)];
+    if (m) spawnBubble(m.text, m.glass || '🥂', false);
+  };
+  setTimeout(show, 4000);
+  setInterval(show, 9000);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('cheers-text');
+  if (!input) return;
+  input.addEventListener('focus', pauseCountdown);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') submitCheersMessage(); });
+});
+
+function spawnBubble(text, glass, isMine = false) {
+  const container = document.getElementById('bubble-container');
+  const el = document.createElement('div');
+  el.className = 'cheers-bubble' + (isMine ? ' mine' : '');
+  el.innerHTML = `<div class="bubble-text">${text}</div><div class="bubble-glass">${glass} 혼술러</div>`;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('fade-out');
+    setTimeout(() => el.remove(), 700);
+  }, isMine ? 4500 : 3500);
+}
+
+// roundRect polyfill for older browsers
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+    this.beginPath();
+    this.moveTo(x + r, y);
+    this.lineTo(x + w - r, y);
+    this.quadraticCurveTo(x + w, y, x + w, y + r);
+    this.lineTo(x + w, y + h - r);
+    this.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    this.lineTo(x + r, y + h);
+    this.quadraticCurveTo(x, y + h, x, y + h - r);
+    this.lineTo(x, y + r);
+    this.quadraticCurveTo(x, y, x + r, y);
+    this.closePath();
+  };
+}
+</script>
+</body>
+</html>
