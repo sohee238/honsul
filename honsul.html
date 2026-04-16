@@ -1118,7 +1118,6 @@
   <div class="popup-content">
     <img class="cheers-emoji" src="images/filled_wine.png" alt="와인잔" />
     <div class="cheers-title">건배!</div>
-    <div class="cheers-sub" id="cheers-sub">오늘도 수고한 <strong>나</strong>에게<br>한 잔 바칩니다 🍻</div>
 
     <div class="cheers-input-area" id="cheers-input-area">
       <div class="cheers-input-wrap">
@@ -1468,8 +1467,6 @@ function showToast() {
   cheersEmoji.src = selectedGlass.filledImg;
   cheersEmoji.alt = selectedGlass.name;
   document.querySelector('.cheers-title').textContent = '건배!';
-  const msg = CHEERS_MESSAGES[Math.floor(Math.random() * CHEERS_MESSAGES.length)];
-  document.getElementById('cheers-sub').innerHTML = msg[0] + '<br>' + msg[1];
 
   const input = document.getElementById('cheers-text');
   input.value = '';
