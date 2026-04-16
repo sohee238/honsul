@@ -1672,6 +1672,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!input) return;
   input.addEventListener('focus', pauseCountdown);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') submitCheersMessage(); });
+
+  // 잔 선택 행: 항상 왼쪽(첫 번째 항목)부터 표시
+  const glassOptions = document.querySelector('.glass-options');
+  if (glassOptions) glassOptions.scrollLeft = 0;
 });
 
 function spawnBubble(text, glass, isMine = false) {
