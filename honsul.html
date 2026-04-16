@@ -238,7 +238,9 @@
   }
 
   .cheers-emoji {
-    font-size: 80px;
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
     animation: glass-clink 0.6s 0.1s both;
     display: block;
   }
@@ -1014,27 +1016,27 @@
   <div id="glass-picker" style="display:flex; flex-direction:column; align-items:center; gap:10px; width:100%;">
     <div class="glass-picker-label">오늘의 잔을 골라봐요 🍻</div>
     <div class="glass-options">
-      <button class="glass-opt active" onclick="selectGlass(this,'🍷','와인잔')">
+      <button class="glass-opt active" onclick="selectGlass(this,'🍷','와인잔','images/cup_wine.png')">
         <img class="glass-icon" src="images/cup_wine.png" alt="와인잔" />
         <span class="glass-name">와인잔</span>
       </button>
-      <button class="glass-opt" onclick="selectGlass(this,'🍺','맥주잔')">
+      <button class="glass-opt" onclick="selectGlass(this,'🍺','맥주잔','images/cup_beer.png')">
         <img class="glass-icon" src="images/cup_beer.png" alt="맥주잔" />
         <span class="glass-name">맥주잔</span>
       </button>
-      <button class="glass-opt" onclick="selectGlass(this,'🥃','소주잔')">
+      <button class="glass-opt" onclick="selectGlass(this,'🥃','소주잔','images/cup_soju.png')">
         <img class="glass-icon" src="images/cup_soju.png" alt="소주잔" />
         <span class="glass-name">소주잔</span>
       </button>
-      <button class="glass-opt" onclick="selectGlass(this,'🍵','막걸리잔')">
+      <button class="glass-opt" onclick="selectGlass(this,'🍵','막걸리잔','images/cup_makgeolli.png')">
         <img class="glass-icon" src="images/cup_makgeolli.png" alt="막걸리잔" />
         <span class="glass-name">막걸리잔</span>
       </button>
-      <button class="glass-opt" onclick="selectGlass(this,'🥃','위스키잔')">
+      <button class="glass-opt" onclick="selectGlass(this,'🥃','위스키잔','images/cup_whisky.png')">
         <img class="glass-icon" src="images/cup_whisky.png" alt="위스키잔" />
         <span class="glass-name">위스키잔</span>
       </button>
-      <button class="glass-opt" onclick="selectGlass(this,'🍶','사케잔')">
+      <button class="glass-opt" onclick="selectGlass(this,'🍶','사케잔','images/cup_sake.png')">
         <img class="glass-icon" src="images/cup_sake.png" alt="사케잔" />
         <span class="glass-name">사케잔</span>
       </button>
@@ -1086,7 +1088,7 @@
 <div id="toast-popup">
   <div class="popup-backdrop"></div>
   <div class="popup-content">
-    <span class="cheers-emoji">🥂</span>
+    <img class="cheers-emoji" src="images/cup_wine.png" alt="와인잔" />
     <div class="cheers-title">건배!</div>
     <div class="cheers-sub" id="cheers-sub">오늘도 수고한 <strong>나</strong>에게<br>한 잔 바칩니다 🍻</div>
 
@@ -1308,14 +1310,14 @@ function selectBg(theme) {
   if (theme !== 'default') document.body.classList.add('theme-' + theme);
 }
 
-let selectedGlass = { emoji: '🍷', name: '와인잔' };
+let selectedGlass = { emoji: '🍷', name: '와인잔', img: 'images/cup_wine.png' };
 
-function selectGlass(el, emoji, name) {
+function selectGlass(el, emoji, name, img) {
   document.querySelectorAll('.glass-opt').forEach(b => b.classList.remove('active'));
   el.classList.add('active');
-  selectedGlass = { emoji, name };
+  selectedGlass = { emoji, name, img };
   const btn = document.getElementById('manual-btn');
-  if (btn) btn.textContent = `${emoji} 그냥 건배하기`;
+  if (btn) btn.innerHTML = `<img src="${img}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:4px;"> 그냥 건배하기`;
 }
 
 const COUNTER_HIT = 'https://api.counterapi.dev/v1/honseul-app-2026/cheers/up';
@@ -1434,7 +1436,9 @@ function resumeCountdown() {
 }
 
 function showToast() {
-  document.querySelector('.cheers-emoji').textContent = selectedGlass.emoji;
+  const cheersEmoji = document.querySelector('.cheers-emoji');
+  cheersEmoji.src = selectedGlass.img;
+  cheersEmoji.alt = selectedGlass.name;
   document.querySelector('.cheers-title').textContent = '건배!';
   const msg = CHEERS_MESSAGES[Math.floor(Math.random() * CHEERS_MESSAGES.length)];
   document.getElementById('cheers-sub').innerHTML = msg[0] + '<br>' + msg[1];
