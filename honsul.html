@@ -1108,7 +1108,6 @@
   </button>
 
   <div id="total-counter" style="display:none; align-items:center; gap:6px;">
-    <span>🥂</span>
     <span>지금까지 <strong id="counter-num">0</strong>번의 건배가 울렸어요</span>
   </div>
 </div>
@@ -1247,7 +1246,7 @@ async function loadModel() {
   try {
     model = await cocoSsd.load();
     loadingBar.classList.remove('show');
-    setStatus('scanning', '🔍 컵을 들어보세요!');
+    setStatus('scanning', '컵을 들어보세요!');
     document.getElementById('manual-btn').style.display = 'block';
     loadCounter();
     listenToMessages();
@@ -1320,7 +1319,7 @@ async function detect() {
       showToast();
     }
   } else {
-    setStatus('scanning', '🔍 컵을 들어보세요!');
+    setStatus('scanning', '컵을 들어보세요!');
   }
 
   requestAnimationFrame(detect);
