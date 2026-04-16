@@ -511,7 +511,12 @@
     box-shadow: 0 0 12px rgba(232,144,42,0.25);
   }
 
-  .glass-icon { font-size: 24px; line-height: 1; }
+  .glass-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    display: block;
+  }
 
   .glass-name {
     font-size: 10px;
@@ -1010,27 +1015,27 @@
     <div class="glass-picker-label">오늘의 잔을 골라봐요 🍻</div>
     <div class="glass-options">
       <button class="glass-opt active" onclick="selectGlass(this,'🍷','와인잔')">
-        <span class="glass-icon">🍷</span>
+        <img class="glass-icon" src="images/cup_wine.png" alt="와인잔" />
         <span class="glass-name">와인잔</span>
       </button>
       <button class="glass-opt" onclick="selectGlass(this,'🍺','맥주잔')">
-        <span class="glass-icon">🍺</span>
+        <img class="glass-icon" src="images/cup_beer.png" alt="맥주잔" />
         <span class="glass-name">맥주잔</span>
       </button>
-      <button class="glass-opt" onclick="selectGlass(this,'🥂','소주잔')">
-        <span class="glass-icon">🥂</span>
+      <button class="glass-opt" onclick="selectGlass(this,'🥃','소주잔')">
+        <img class="glass-icon" src="images/cup_soju.png" alt="소주잔" />
         <span class="glass-name">소주잔</span>
       </button>
       <button class="glass-opt" onclick="selectGlass(this,'🍵','막걸리잔')">
-        <span class="glass-icon">🍵</span>
+        <img class="glass-icon" src="images/cup_makgeolli.png" alt="막걸리잔" />
         <span class="glass-name">막걸리잔</span>
       </button>
       <button class="glass-opt" onclick="selectGlass(this,'🥃','위스키잔')">
-        <span class="glass-icon">🥃</span>
+        <img class="glass-icon" src="images/cup_whisky.png" alt="위스키잔" />
         <span class="glass-name">위스키잔</span>
       </button>
       <button class="glass-opt" onclick="selectGlass(this,'🍶','사케잔')">
-        <span class="glass-icon">🍶</span>
+        <img class="glass-icon" src="images/cup_sake.png" alt="사케잔" />
         <span class="glass-name">사케잔</span>
       </button>
     </div>
