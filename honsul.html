@@ -1468,7 +1468,7 @@ function showToast() {
   const sendBtn = document.getElementById('cheers-send');
   sendBtn.disabled = false;
   sendBtn.textContent = '남기기';
-  input.onkeydown = e => { if (e.key === 'Enter') submitCheersMessage(); };
+  input.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) submitCheersMessage(); };
 
   countdownPaused = false;
   popup.className = '';
@@ -1669,7 +1669,7 @@ function startBubbleShow() {
 document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('cheers-text');
   if (!input) return;
-  input.onkeydown = e => { if (e.key === 'Enter') submitCheersMessage(); };
+  input.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing) submitCheersMessage(); };
 
   // 잔 선택 행: 항상 왼쪽(첫 번째 항목)부터 표시
   const glassOptions = document.querySelector('.glass-options');
