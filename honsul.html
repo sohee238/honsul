@@ -1347,6 +1347,7 @@ function selectGlass(el, emoji, name, img, filledImg) {
 }
 
 let autoCloseTimer = null;
+let lastSubmitTs = 0;
 let countdownInterval = null;
 
 function loadCounter() {
@@ -1610,7 +1611,7 @@ function listenToMessages() {
     const startTs = Date.now();
     db.ref('honseul_messages').limitToLast(1).on('child_added', snap => {
       const m = snap.val();
-      if (m && m.ts > startTs + 1000) spawnBubble(m.text, m.glass, false);
+      if (m && m.ts > startTs + 1000 && m.ts !== lastSubmitTs) spawnBubble(m.text, m.glass, false);
     });
   } else {
     firebaseMsgs = [...SEED_MSGS];
@@ -1623,6 +1624,7 @@ function submitCheersMessage() {
   if (!text) return;
 
   const msg = { text, glass: selectedGlass.emoji, ts: Date.now() };
+  lastSubmitTs = msg.ts;
 
   if (db) {
     db.ref('honseul_messages').push(msg);
