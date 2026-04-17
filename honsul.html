@@ -1471,6 +1471,7 @@ function showToast() {
   input.oncompositionstart = () => { input._composing = true; };
   input.oncompositionend = () => { input._composing = false; };
   input.onkeydown = e => { if (e.key === 'Enter' && !e.isComposing && !input._composing) submitCheersMessage(); };
+  input.onfocus = () => pauseCountdown();
 
   countdownPaused = false;
   popup.className = '';
