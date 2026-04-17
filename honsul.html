@@ -1249,9 +1249,6 @@ async function loadModel() {
     loadingBar.classList.remove('show');
     setStatus('scanning', '컵을 들어보세요!');
     document.getElementById('manual-btn').style.display = 'block';
-    loadCounter();
-    listenToMessages();
-    startBubbleShow();
     requestAnimationFrame(detect);
   } catch(e) {
     loadingBar.classList.remove('show');
@@ -1499,8 +1496,6 @@ function showToast() {
   }, 5000);
 }
 
-loadCounter();
-
 function hideToast() {
   popup.classList.remove('show');
   popup.classList.add('hide');
@@ -1563,6 +1558,10 @@ try {
     db = firebase.database();
   }
 } catch(e) { console.warn('Firebase 초기화 실패', e); }
+
+loadCounter();
+listenToMessages();
+startBubbleShow();
 
 const SEED_MSGS = [
   { text: '야근 버티고 한 잔, 나 최고야', glass: '🍺' },
