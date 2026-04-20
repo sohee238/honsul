@@ -1366,9 +1366,9 @@ function updateFoodPairing() {
   const food = match ? (FOOD_PAIRING['cup_' + match[1]] || '안주') : '안주';
   const encoded = encodeURIComponent(food);
   document.getElementById('food-pairing-name').textContent = food;
-  document.getElementById('link-baemin').href = `https://baemin.com/search?query=${encoded}`;
-  document.getElementById('link-coupang').href = `https://www.coupangeats.com/`;
-  document.getElementById('link-yogiyo').href = `https://www.yogiyo.co.kr/`;
+  document.getElementById('link-baemin').href = `https://www.baemin.com/search?query=${encoded}`;
+  document.getElementById('link-coupang').href = `https://www.coupangeats.com/search?q=${encoded}`;
+  document.getElementById('link-yogiyo').href = `https://www.yogiyo.co.kr/order/search/?query=${encoded}`;
 }
 
 function selectGlass(el, emoji, name, img, filledImg) {
@@ -1704,6 +1704,8 @@ function startBubbleShow() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  updateFoodPairing();
+
   const input = document.getElementById('cheers-text');
   if (!input) return;
   input.oncompositionstart = () => { input._composing = true; };
@@ -1713,8 +1715,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // 잔 선택 행: 항상 왼쪽(첫 번째 항목)부터 표시
   const glassOptions = document.querySelector('.glass-options');
   if (glassOptions) glassOptions.scrollLeft = 0;
-
-  updateFoodPairing();
 });
 
 function spawnBubble(text, glass, isMine = false) {
