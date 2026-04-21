@@ -1366,9 +1366,9 @@ function updateFoodPairing() {
   const food = match ? (FOOD_PAIRING['cup_' + match[1]] || '안주') : '안주';
   const encoded = encodeURIComponent(food);
   document.getElementById('food-pairing-name').textContent = food;
-  document.getElementById('link-baemin').href = `https://www.baemin.com/search?query=${encoded}`;
-  document.getElementById('link-coupang').href = `https://www.coupangeats.com/search?q=${encoded}`;
-  document.getElementById('link-yogiyo').href = `https://www.yogiyo.co.kr/order/search/?query=${encoded}`;
+  document.getElementById('link-baemin').href = `https://www.baemin.com/search/main?keyword=${encoded}`;
+  document.getElementById('link-coupang').href = `https://www.coupangeats.com/`;
+  document.getElementById('link-yogiyo').href = `https://www.yogiyo.co.kr/`;
 }
 
 function selectGlass(el, emoji, name, img, filledImg) {
