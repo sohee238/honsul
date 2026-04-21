@@ -1137,8 +1137,7 @@
 <div class="confetti-container" id="confetti-container"></div>
 
 <div id="food-pairing-section" style="margin: 32px 16px 0; padding: 20px; background: rgba(255,255,255,0.06); border-radius: 16px; text-align:center; font-family:'SUIT',sans-serif;">
-  <div style="font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:6px;">오늘의 안주 추천 🍽</div>
-  <div id="food-pairing-name" style="font-size:20px; font-weight:700; color:rgba(255,255,255,0.9); margin-bottom:14px;"></div>
+  <div style="font-size:12px; color:rgba(255,255,255,0.45); margin-bottom:12px;">오늘의 안주 추천 🍽</div>
   <div style="display:flex; gap:8px; justify-content:center;">
     <a id="link-baemin" href="https://www.baemin.com" target="_blank" rel="noopener" style="flex:1; max-width:110px; padding:9px 0; border-radius:10px; background:rgba(49,191,140,0.18); color:#2fc88a; font-size:13px; font-weight:600; text-decoration:none;">배달의민족</a>
     <a id="link-coupang" href="https://www.coupangeats.com" target="_blank" rel="noopener" style="flex:1; max-width:110px; padding:9px 0; border-radius:10px; background:rgba(255,90,50,0.18); color:#ff6b3d; font-size:13px; font-weight:600; text-decoration:none;">쿠팡이츠</a>
@@ -1352,24 +1351,6 @@ function selectBg(theme) {
 
 let selectedGlass = { emoji: '🍷', name: '와인잔', img: 'images/cup_wine.png', filledImg: 'images/filled_wine.png' };
 
-const FOOD_PAIRING = {
-  'cup_wine':      '치즈플래터',
-  'cup_beer':      '치킨',
-  'cup_soju':      '삼겹살',
-  'cup_makgeolli': '파전',
-  'cup_whisky':    '육포',
-  'cup_sake':      '닭꼬치',
-};
-
-function updateFoodPairing() {
-  const match = selectedGlass.img.match(/cup_(\w+)\.png/);
-  const food = match ? (FOOD_PAIRING['cup_' + match[1]] || '안주') : '안주';
-  const encoded = encodeURIComponent(food);
-  document.getElementById('food-pairing-name').textContent = food;
-  document.getElementById('link-baemin').href = `https://www.baemin.com/search/main?keyword=${encoded}`;
-  document.getElementById('link-coupang').href = `https://www.coupangeats.com/`;
-  document.getElementById('link-yogiyo').href = `https://www.yogiyo.co.kr/`;
-}
 
 function selectGlass(el, emoji, name, img, filledImg) {
   document.querySelectorAll('.glass-opt').forEach(b => b.classList.remove('active'));
@@ -1377,7 +1358,6 @@ function selectGlass(el, emoji, name, img, filledImg) {
   selectedGlass = { emoji, name, img, filledImg };
   const btn = document.getElementById('manual-btn');
   if (btn) btn.innerHTML = `<img src="${img}" style="width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:4px;"> 그냥 건배하기`;
-  updateFoodPairing();
 }
 
 let autoCloseTimer = null;
@@ -1704,8 +1684,6 @@ function startBubbleShow() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  updateFoodPairing();
-
   const input = document.getElementById('cheers-text');
   if (!input) return;
   input.oncompositionstart = () => { input._composing = true; };
