@@ -1474,6 +1474,9 @@ function resumeCountdown() {
 }
 
 function showToast() {
+  const clinkAudio = new Audio('sounds/clink.mp3');
+  clinkAudio.play().catch(() => {});
+
   const cheersEmoji = document.querySelector('.cheers-emoji');
   cheersEmoji.src = selectedGlass.filledImg;
   cheersEmoji.alt = selectedGlass.name;
