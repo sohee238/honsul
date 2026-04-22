@@ -1573,6 +1573,7 @@ const firebaseConfig = {
 
 let db = null;
 let firebaseMsgs = [];
+let bubbleShowStarted = false;
 
 try {
   if (!firebaseConfig.apiKey.includes('YOUR')) {
@@ -1675,7 +1676,6 @@ function submitCheersMessage() {
   }, 3000);
 }
 
-let bubbleShowStarted = false;
 function startBubbleShow() {
   if (bubbleShowStarted) return;
   bubbleShowStarted = true;
